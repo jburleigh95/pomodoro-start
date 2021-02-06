@@ -1,5 +1,8 @@
 from tkinter import *
+# Import the playsound function to add a sound effect
+from playsound import playsound
 import math
+
 # ---------------------------- CONSTANTS ------------------------------- #
 PINK = "#e2979c"
 RED = "#e7305b"
@@ -12,7 +15,12 @@ LONG_BREAK_MIN = 20
 reps = 0
 timer = None
 
-# ---------------------------- TIMER RESET ------------------------------- # 
+# Keep track of your best work streak to keep you motivated
+with open('streak.txt') as file:
+    best_streak = int(file.read())
+
+# ---------------------------- TIMER RESET ------------------------------- #
+
 
 def reset_timer():
     window.after_cancel(timer)
@@ -42,8 +50,12 @@ def start_timer():
         count_down(work_sec)
         timer_label.config(text="Work", fg=GREEN)
 
-# ---------------------------- COUNTDOWN MECHANISM ------------------------------- # 
+# ---------------------------- COUNTDOWN MECHANISM ------------------------------- #
+
+
 def count_down(count):
+    # Global variable to update best_streak
+    global best_streak
     count_min = math.floor(count / 60)
     count_sec = count % 60
     if count_sec <= 9:
@@ -56,12 +68,24 @@ def count_down(count):
     else:
         start_timer()
         marks = ""
+        # Set your streak to 0. This follows the same logic as the check marks,
+        # adding one for each work session completed
+        streak = 0
+        # Play sound effect asynchronous to program each time the timer reaches zero
+        playsound('alarm.wav', block=False)
+        # Move the pomodoro window to the top of the screen each time the timer reaches zero
         window.lift()
         window.attributes('-topmost', True)
         window.after_idle(window.attributes, '-topmost', False)
-        for _ in range(math.floor(reps/2)):
+        for _ in range(math.floor(reps / 2)):
+            # Add one to your current streak for each work session completed
+            streak += 1
             marks += "✔"
         check_marks.config(text=marks)
+        # Update your best work streak as you progress above your current streak
+        if streak > best_streak:
+            best_streak = streak
+            streak_label.config(text=f"Best Streak: {best_streak}")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -87,4 +111,12 @@ reset.grid(column=2, row=2)
 check_marks = Label(fg=GREEN, bg=YELLOW)
 check_marks.grid(column=1, row=3)
 
+# Add a streak label to show your best streak
+streak_label = Label(text=f"Best Streak: {best_streak}", fg=RED, bg=YELLOW, font=(FONT_NAME, 15, "bold"))
+streak_label.grid(column=1, row=4)
+
 window.mainloop()
+
+# Save your best streak to a text file so you never lose it!
+with open('streak.txt', mode='w') as file:
+    file.write(str(best_streak))
